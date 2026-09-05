@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#006b5f">
+<title>Glass Market Scan MVP</title>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+:root{--p:#006b5f;--a:#00a88f;--bg:#f3f6f5;--bd:#ccd8d5;--red:#b42318}*{box-sizing:border-box}body{margin:0;background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;color:#243632}header{position:sticky;top:0;z-index:5;background:var(--p);color:#fff;padding:16px}header h1{font-size:21px;margin:0}header p{font-size:13px;margin:4px 0 0;opacity:.9}main{max-width:780px;margin:auto;padding:14px 14px 125px}.card{background:#fff;border-radius:15px;padding:16px;margin-bottom:14px;box-shadow:0 2px 9px #0001}h2{font-size:18px;color:var(--p);margin:0 0 12px}.hint{font-size:13px;color:#5b6b67;line-height:1.45}.req{color:var(--red)}label{display:block;font-weight:700;font-size:14px;margin:13px 0 6px}input,select,textarea{width:100%;font:inherit;padding:12px;border:1px solid var(--bd);border-radius:10px;background:#fff}input[type=file]{background:#eef7f5}#previewWrap{display:none;margin-top:12px}#preview{display:block;width:100%;max-height:420px;object-fit:contain;border-radius:12px;background:#edf1f0}.photoName{font-size:12px;color:#50615d;margin-top:6px;word-break:break-all}.confirm{display:flex;gap:8px;align-items:flex-start;margin-top:8px;padding:10px;background:#f7faf9;border-radius:9px}.confirm input{width:auto}.confirm label{margin:0;font-weight:600}.btn{width:100%;border:0;border-radius:10px;padding:13px;font-weight:750;font-size:15px;cursor:pointer}.primary{background:var(--a);color:#fff}.secondary{background:#e4f3ef;color:var(--p)}.excel{background:#107c41;color:#fff}.danger{background:#fff0ef;color:var(--red)}.btn:disabled{opacity:.5}.gallery{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.maker{display:block;border:2px solid var(--bd);border-radius:12px;background:#fff;padding:10px 7px;min-height:96px;color:#233;cursor:pointer}.maker .abbr{display:flex;height:38px;align-items:center;justify-content:center;border-radius:8px;background:#f0f4f3;font-size:17px;font-weight:850;color:#61716e}.maker .name{display:block;margin-top:8px;font-size:13px;font-weight:750;text-align:center}.maker.selected{border-color:var(--a);background:#e8faf6;box-shadow:0 0 0 2px #00a88f30}.maker.selected .abbr{background:#ccefe7;color:var(--p)}.status{margin-top:9px;padding:10px;border-radius:9px;background:#eef7f5;color:var(--p);font-weight:700;font-size:13px}.actions{display:grid;gap:9px}.history{padding:9px 0;border-top:1px solid #e4eae8;font-size:13px}.footer{position:fixed;bottom:0;left:0;right:0;background:#fffe;backdrop-filter:blur(8px);padding:10px 14px calc(10px + env(safe-area-inset-bottom));box-shadow:0 -2px 10px #0002}.footer>div{max-width:780px;margin:auto;display:grid;grid-template-columns:1fr 1fr;gap:9px}.bar{display:none;height:9px;overflow:hidden;border-radius:9px;background:#e4eae8;margin-top:9px}.bar div{height:100%;width:0;background:var(--a)}@media(min-width:620px){.gallery{grid-template-columns:repeat(3,1fr)}}
+</style>
+</head>
+<body>
+<header><h1>Glass Market Scan</h1><p>Collecte marché bouteilles et pots</p></header>
+<main>
+<section class="card"><h2>1. Dossier de stockage</h2><p class="hint">Dans Edge ou Chrome sur Windows, sélectionnez : <b>C:\Users\P0087494\OneDrive - Verallia\IA\copilot\app marché</b>. L’application créera ou mettra à jour <b>glass_market_scan.xlsx</b> et enregistrera chaque photo dans ce même dossier.</p><button id="chooseFolder" type="button" class="btn excel">Choisir le dossier OneDrive</button><div id="folderStatus" class="status">Aucun dossier sélectionné</div></section>
+<section class="card"><h2>2. Photo de l’emballage</h2><p class="hint">Prenez ou choisissez une photo. L’aperçu doit apparaître immédiatement. À l’enregistrement, la photo sera copiée dans le dossier choisi et son nom sera inscrit dans Excel.</p><input id="photo" type="file" accept="image/*" capture="environment"><div id="previewWrap"><img id="preview" alt="Aperçu de l’emballage"><div id="photoName" class="photoName"></div></div><button id="ocr" type="button" class="btn secondary" style="margin-top:10px" disabled>Lire la marque et l’année par OCR</button><div id="bar" class="bar"><div></div></div><div id="ocrStatus" class="status" style="display:none"></div></section>
+<section class="card"><h2>3. Informations produit</h2><label>Marque <span class="req">*</span></label><input id="brand" placeholder="Marque"><label>Année / millésime</label><input id="year" type="number" inputmode="numeric" min="1900" max="2100" placeholder="2024"><label>Produit</label><input id="product" placeholder="Produit"><label>Format en ml</label><input id="format" type="number" inputmode="numeric" min="1" placeholder="750"><label>Type <span class="req">*</span></label><select id="type"><option value="">Sélectionner</option><option>Bouteille</option><option>Pot</option></select><label>Segment <span class="req">*</span></label><select id="segment"><option value="">Sélectionner</option><option>Vin tranquille</option><option>Vin effervescent</option><option>Spiritueux</option><option>Bière</option><option>Eau</option><option>Boisson sans alcool</option><option>Huile et condiment</option><option>Alimentaire</option><option>Pharmacie / cosmétique</option><option>Autre</option></select><label>Couleur <span class="req">*</span></label><select id="color"><option value="">Sélectionner</option><option>Extra-blanc</option><option>Blanc</option><option>Cannelle</option><option>Feuille morte</option><option>Tradiver</option><option>Vert</option><option>Bleu</option><option>Jaune</option><option>Ambré</option><option>Autre</option></select></section>
+<section class="card"><h2>4. Choix du verrier</h2><p class="hint">Regardez le punt mark sous l’emballage puis choisissez le verrier. Aucune photo du punt mark n’est demandée.</p><div id="gallery" class="gallery"></div><div id="makerStatus" class="status">Aucun verrier sélectionné</div><div id="otherWrap" style="display:none"><label>Autre verrier</label><input id="otherMaker" placeholder="Nom si identifiable"></div><label>Niveau de certitude <span class="req">*</span></label><select id="certainty"><option value="">Sélectionner</option><option>Certain</option><option>Probable</option><option>Douteux</option></select></section>
+<section class="card"><h2>5. Contexte</h2><label>Pays</label><input id="country" value="France"><label>Enseigne / lieu</label><input id="place" placeholder="Caviste, GMS, salon"><label>Commentaire</label><textarea id="comment" rows="3"></textarea></section>
+<section class="card"><h2>Observations</h2><div id="count" class="status">0 observation</div><div id="history"></div><div class="actions" style="margin-top:10px"><button id="clear" type="button" class="btn danger">Effacer les données locales</button></div></section>
+</main>
+<div class="footer"><div><button id="save" class="btn primary">Enregistrer</button><button id="reset" class="btn secondary">Nouveau relevé</button></div></div>
+<script>
+const $=id=>document.getElementById(id);
+const makers=[['VER','Verallia'],['OI','O-I'],['SAV','Saverglass'],['VID','Vidrala'],['BA','BA Glass'],['SIS','Şişecam'],['WIE','Wiegand-Glas'],['VET','Vetropack'],['SOT','Sotuver'],['ZIG','Zignago Vetro'],['VSP','Vetri Speciali'],['AUT','Autre']];
+let selectedMaker='',imageData='',photoFile=null,directoryHandle=null;
+for(const [code,name] of makers){const b=document.createElement('button');b.type='button';b.className='maker';b.innerHTML='<span class="abbr">'+code+'</span><span class="name">'+name+'</span>';b.addEventListener('click',()=>{document.querySelectorAll('.maker').forEach(x=>x.classList.remove('selected'));b.classList.add('selected');selectedMaker=name;$('makerStatus').textContent='Verrier sélectionné : '+name;$('otherWrap').style.display=name==='Autre'?'block':'none'});$('gallery').appendChild(b)}
+$('chooseFolder').addEventListener('click',async()=>{if(!window.showDirectoryPicker){alert('Cette fonction nécessite Microsoft Edge ou Chrome sur Windows, depuis une page autorisée.');return}try{directoryHandle=await window.showDirectoryPicker({mode:'readwrite'});$('folderStatus').textContent='Dossier actif : '+directoryHandle.name+' | Excel et photos seront enregistrés ici. Gardez le classeur Excel fermé pendant la saisie.'}catch(e){if(e.name!=='AbortError')alert('Dossier non accessible : '+e.message)}});
+$('photo').addEventListener('change',e=>{photoFile=e.target.files&&e.target.files[0];if(!photoFile)return;const r=new FileReader();r.onload=()=>{imageData=r.result;$('preview').src=imageData;$('previewWrap').style.display='block';$('photoName').textContent='Photo sélectionnée : '+photoFile.name;$('ocr').disabled=false};r.onerror=()=>alert('La photo n’a pas pu être affichée.');r.readAsDataURL(photoFile)});
+$('ocr').addEventListener('click',async()=>{if(!imageData)return;const bar=$('bar');bar.style.display='block';bar.firstElementChild.style.width='0%';$('ocrStatus').style.display='block';$('ocrStatus').textContent='OCR en cours…';try{const r=await Tesseract.recognize(imageData,'fra+eng',{logger:m=>{if(m.status==='recognizing text')bar.firstElementChild.style.width=Math.round(m.progress*100)+'%'}});const t=r.data.text||'',lines=t.split(/\n/).map(x=>x.trim()).filter(x=>x.length>2),excluded=/appellation|mis en bouteille|produit de|contient|alcool|volume|ingredients|bottled|product of/i;const candidate=lines.find(x=>x.length<=50&&!excluded.test(x)&&!/(19|20)\d{2}/.test(x)&&!/\d+[,.]?\d*\s*(ml|cl|l)\b/i.test(x));const years=t.match(/\b(19\d{2}|20\d{2})\b/g);if(candidate)$('brand').value=candidate;if(years)$('year').value=years[0];$('ocrStatus').textContent='OCR terminé. Vérifiez et corrigez si nécessaire.'}catch(e){$('ocrStatus').textContent='OCR indisponible. Saisissez manuellement.'}finally{setTimeout(()=>bar.style.display='none',600)}});
+function rows(){try{return JSON.parse(localStorage.getItem('glassObservations')||'[]')}catch{return[]}}function setRows(v){localStorage.setItem('glassObservations',JSON.stringify(v))}
+function validate(){if(!directoryHandle)return'Sélectionnez d’abord le dossier OneDrive';if(!photoFile)return'Ajoutez une photo';if(!$('brand').value.trim())return'Marque obligatoire';if(!$('type').value)return'Sélectionnez le type';if(!$('segment').value)return'Sélectionnez le segment';if(!$('color').value)return'Sélectionnez la couleur';if(!selectedMaker)return'Sélectionnez le verrier';if(!$('certainty').value)return'Sélectionnez le niveau de certitude';return''}
+function clean(s){return String(s||'photo').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9_-]+/g,'_').replace(/^_+|_+$/g,'').slice(0,45)||'photo'}
+function extension(file){const parts=file.name.split('.');if(parts.length>1)return parts.pop().toLowerCase().replace(/[^a-z0-9]/g,'')||'jpg';return file.type==='image/png'?'png':'jpg'}
+function timestamp(){return new Date().toISOString().replace(/[-:]/g,'').replace('T','_').slice(0,15)}
+async function savePhoto(file,fileName){const handle=await directoryHandle.getFileHandle(fileName,{create:true});const writable=await handle.createWritable();await writable.write(await file.arrayBuffer());await writable.close()}
+function workbookArray(data){
+  if(typeof XLSX==='undefined')throw new Error('La bibliothèque Excel n’est pas chargée. Vérifiez la connexion Internet.');
+  const headers=['Date','Marque','Annee','Produit','Format_ml','Type','Segment','Couleur','Verrier','Autre_verrier','Certitude','Pays','Enseigne_lieu','Commentaire','Fichier_photo'];
+  const wb=XLSX.utils.book_new();
+  const ws=data.length ? XLSX.utils.json_to_sheet(data,{header:headers}) : XLSX.utils.aoa_to_sheet([headers]);
+  ws['!cols']=[{wch:22},{wch:24},{wch:10},{wch:24},{wch:12},{wch:12},{wch:24},{wch:16},{wch:20},{wch:20},{wch:12},{wch:14},{wch:25},{wch:42},{wch:34}];
+  XLSX.utils.book_append_sheet(wb,ws,'Observations');
+  return XLSX.write(wb,{bookType:'xlsx',type:'array'});
+}
+async function writeWorkbook(data){
+  const fileName='glass_market_scan.xlsx';
+  const bytes=workbookArray(data);
+  async function writeOnce(){
+    const handle=await directoryHandle.getFileHandle(fileName,{create:true});
+    const writable=await handle.createWritable({keepExistingData:false});
+    await writable.write(bytes);
+    await writable.close();
+  }
+  try{
+    await writeOnce();
+  }catch(error){
+    const message=String(error&&error.message||error);
+    const isStaleState=/state cached|state has changed|read from disk|InvalidState/i.test(message);
+    if(!isStaleState)throw error;
+    // OneDrive ou Excel a modifié le fichier entre l'obtention du handle et l'écriture.
+    // Les données complètes étant reconstruites depuis le stockage local, le fichier peut
+    // être supprimé puis recréé sans perdre les observations déjà enregistrées.
+    try{await directoryHandle.removeEntry(fileName)}catch(removeError){
+      throw new Error('Fermez glass_market_scan.xlsx dans Excel, attendez la fin de sa synchronisation OneDrive, puis réessayez. Détail : '+message);
+    }
+    await writeOnce();
+  }
+}
+function current(photoName){return{Date:new Date().toISOString(),Marque:$('brand').value.trim(),Annee:$('year').value,Produit:$('product').value.trim(),Format_ml:$('format').value,Type:$('type').value,Segment:$('segment').value,Couleur:$('color').value,Verrier:selectedMaker,Autre_verrier:$('otherMaker').value.trim(),Certitude:$('certainty').value,Pays:$('country').value.trim(),Enseigne_lieu:$('place').value.trim(),Commentaire:$('comment').value.trim(),Fichier_photo:photoName}}
+$('save').addEventListener('click',async()=>{
+  const error=validate();if(error){alert(error);return}
+  $('save').disabled=true;$('save').textContent='Enregistrement…';
+  let photoName='';
+  try{
+    photoName='photo_'+timestamp()+'_'+clean($('brand').value)+'.'+extension(photoFile);
+    const existing=rows();
+    const observation=current(photoName);
+    const data=[...existing,observation];
+    await savePhoto(photoFile,photoName);
+    await writeWorkbook(data);
+    // Valider le stockage navigateur seulement après réussite de l'Excel.
+    setRows(data);render();
+    alert('Observation enregistrée. Excel et photo sauvegardés dans le dossier sélectionné.');
+    resetForm();
+  }catch(e){
+    alert('Enregistrement impossible : '+e.message+'\n\nLa saisie reste affichée. Fermez le fichier Excel s’il est ouvert, puis appuyez de nouveau sur Enregistrer.');
+  }finally{$('save').disabled=false;$('save').textContent='Enregistrer'}
+});
+function resetForm(){$('photo').value='';photoFile=null;imageData='';$('preview').removeAttribute('src');$('previewWrap').style.display='none';['brand','year','product','format','otherMaker','place','comment'].forEach(i=>$(i).value='');['type','segment','color','certainty'].forEach(i=>$(i).selectedIndex=0);selectedMaker='';document.querySelectorAll('.maker').forEach(x=>x.classList.remove('selected'));$('makerStatus').textContent='Aucun verrier sélectionné';$('otherWrap').style.display='none';$('ocr').disabled=true;$('ocrStatus').style.display='none';window.scrollTo({top:0,behavior:'smooth'})}
+$('reset').addEventListener('click',resetForm);
+function render(){const data=rows();$('count').textContent=data.length+' observation'+(data.length>1?'s':'');$('history').innerHTML=data.slice().reverse().slice(0,5).map(o=>'<div class="history"><b>'+o.Marque+'</b> · '+o.Segment+' · '+o.Verrier+'<br>'+new Date(o.Date).toLocaleString('fr-FR')+' · '+(o.Fichier_photo||'sans photo')+'</div>').join('')}
+
+$('clear').addEventListener('click',()=>{if(confirm('Effacer les observations du navigateur ? Les fichiers déjà enregistrés dans OneDrive ne seront pas supprimés.')){localStorage.removeItem('glassObservations');render()}});render();
+</script>
+</body></html>
